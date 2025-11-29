@@ -1,4 +1,5 @@
-import { describe, test, expect, beforeEach, vi } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
+
 import { getPerformanceManager, trackExecution, measureExecution, formatMetrics, formatCacheStats } from '../../performance.js';
 
 // Mock config

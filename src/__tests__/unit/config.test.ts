@@ -1,4 +1,5 @@
 import { describe, test, expect } from 'vitest';
+
 import { ConfigLoader, ConfigSchema, DEFAULT_CONFIG } from '../../config.js';
 
 describe('ConfigLoader', () => {

@@ -1,4 +1,7 @@
+import * as fs from 'fs/promises';
+
 import { describe, test, expect, vi, beforeEach } from 'vitest';
+
 import {
   sanitizeInput,
   validatePath,
@@ -11,7 +14,6 @@ import {
   validateToolParameters,
   logSecurityEvent
 } from '../../security.js';
-import * as fs from 'fs/promises';
 
 // Mock fs module
 vi.mock('fs/promises');

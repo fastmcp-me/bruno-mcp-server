@@ -1,6 +1,9 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
+
 import { z } from 'zod';
+
+import type { IConfigLoader } from './interfaces.js';
 
 /**
  * Configuration schema for Bruno MCP Server
@@ -108,7 +111,7 @@ export const DEFAULT_CONFIG: BrunoMCPConfig = {
 /**
  * Configuration loader class
  */
-export class ConfigLoader {
+export class ConfigLoader implements IConfigLoader {
   private config: BrunoMCPConfig;
   private configPath?: string;
 

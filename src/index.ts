@@ -9,12 +9,13 @@ import {
   ErrorCode,
   McpError
 } from '@modelcontextprotocol/sdk/types.js';
-import { BrunoCLI } from './bruno-cli.js';
 import { z } from 'zod';
+
+import { BrunoCLI } from './bruno-cli.js';
 import { initializeConfig, getConfigLoader } from './config.js';
-import { validateToolParameters, maskSecretsInError, logSecurityEvent } from './security.js';
-import { getPerformanceManager, measureExecution, formatMetrics, formatCacheStats } from './performance.js';
 import { getLogger } from './logger.js';
+import { getPerformanceManager, formatMetrics, formatCacheStats } from './performance.js';
+import { validateToolParameters, maskSecretsInError, logSecurityEvent } from './security.js';
 
 // Tool parameter schemas
 const RunRequestSchema = z.object({
@@ -296,19 +297,19 @@ class BrunoMCPServer {
     
     this.brunoCLI = new BrunoCLI();
     this.setupHandlers();
-    
+
     // Check Bruno CLI availability on startup
-    this.checkBrunoCLI();
+    void this.checkBrunoCLI();
   }
 
   private async checkBrunoCLI() {
     const logger = getLogger();
     const isAvailable = await this.brunoCLI.isAvailable();
     if (!isAvailable) {
-      logger.warning('Bruno CLI is not available', { suggestion: 'Run npm install to install dependencies' });
+      void logger.warning('Bruno CLI is not available', { suggestion: 'Run npm install to install dependencies' });
       console.error('Warning: Bruno CLI is not available. Please run "npm install" to install dependencies.');
     } else {
-      logger.info('Bruno CLI is available and ready');
+      void logger.info('Bruno CLI is available and ready');
     }
   }
 
@@ -325,7 +326,7 @@ class BrunoMCPServer {
       const startTime = Date.now();
 
       try {
-        logger.info(`Executing tool: ${name}`, { tool: name });
+        void logger.info(`Executing tool: ${name}`, { tool: name });
 
         let result;
         switch (name) {
@@ -382,7 +383,7 @@ class BrunoMCPServer {
         logger.logToolExecution(name, args, duration, false);
 
         if (error instanceof McpError) {
-          logger.error(`Tool execution failed: ${name}`, error, { tool: name });
+          void logger.error(`Tool execution failed: ${name}`, error, { tool: name });
           throw error;
         }
 
@@ -390,7 +391,7 @@ class BrunoMCPServer {
         const maskedError = error instanceof Error ? maskSecretsInError(error) : error;
         const errorMessage = maskedError instanceof Error ? maskedError.message : String(maskedError);
 
-        logger.error(`Tool execution error: ${name}`, maskedError instanceof Error ? maskedError : new Error(errorMessage), { tool: name });
+        void logger.error(`Tool execution error: ${name}`, maskedError instanceof Error ? maskedError : new Error(errorMessage), { tool: name });
 
         // Convert other errors to MCP errors
         throw new McpError(
@@ -1281,7 +1282,7 @@ class BrunoMCPServer {
     const configLoader = getConfigLoader();
     const config = configLoader.getConfig();
 
-    logger.info('Bruno MCP Server started successfully', {
+    void logger.info('Bruno MCP Server started successfully', {
       version: '0.1.0',
       loggingLevel: config.logging?.level || 'info',
       retryEnabled: config.retry?.enabled || false,
@@ -1294,7 +1295,7 @@ class BrunoMCPServer {
 }
 
 // Initialize configuration and start the server
-(async () => {
+void (async () => {
   try {
     // Initialize configuration
     await initializeConfig();
@@ -1304,7 +1305,7 @@ class BrunoMCPServer {
     await server.run();
   } catch (error) {
     const logger = getLogger();
-    logger.error('Failed to start Bruno MCP Server', error instanceof Error ? error : new Error(String(error)));
+    void logger.error('Failed to start Bruno MCP Server', error instanceof Error ? error : new Error(String(error)));
     console.error('Failed to start Bruno MCP Server:', error);
     process.exit(1);
   }

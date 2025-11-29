@@ -131,7 +131,7 @@ export class MockBrunoCLI {
   /**
    * Mock running a collection
    */
-  async runCollection(args: string[]): Promise<MockBrunoResponse> {
+  async runCollection(_args: string[]): Promise<MockBrunoResponse> {
     await this.delay();
 
     if (this.shouldFail) {

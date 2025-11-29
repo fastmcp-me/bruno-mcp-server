@@ -1,9 +1,12 @@
-import { describe, test, expect, beforeEach } from 'vitest';
-import { MockBrunoCLI, createMockBrunoCLI } from '../../mock-bruno-cli.js';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import { tmpdir } from 'os';
 import { randomUUID } from 'crypto';
+import * as fs from 'fs/promises';
+import { tmpdir } from 'os';
+import * as path from 'path';
+
+import { describe, test, expect, beforeEach } from 'vitest';
+
+import { MockBrunoCLI, createMockBrunoCLI } from '../../mock-bruno-cli.js';
+
 
 describe('MockBrunoCLI', () => {
   let mockCLI: MockBrunoCLI;

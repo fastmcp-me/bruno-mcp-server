@@ -1,9 +1,10 @@
-import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { BrunoCLI } from '../../bruno-cli.js';
-import { mockBrunoResponses } from '../mocks/bruno-cli.mock.js';
-import { getPerformanceManager } from '../../performance.js';
 import * as fs from 'fs/promises';
-import * as path from 'path';
+
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
+
+import { BrunoCLI } from '../../bruno-cli.js';
+import { getPerformanceManager } from '../../performance.js';
+import { mockBrunoResponses } from '../mocks/bruno-cli.mock.js';
 
 // Mock fs module
 vi.mock('fs/promises');
@@ -229,8 +230,6 @@ get {
 
   describe('listEnvironments()', () => {
     test('should list all environments with variables', async () => {
-      const envPath = path.join(testCollectionPath, 'environments');
-
       mockedFs.readdir.mockResolvedValueOnce([
         { name: 'dev.bru', isFile: () => true, isDirectory: () => false },
         { name: 'staging.bru', isFile: () => true, isDirectory: () => false },

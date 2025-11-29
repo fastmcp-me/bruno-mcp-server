@@ -1,6 +1,8 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
+
 import { getConfigLoader } from './config.js';
+import type { ILogger } from './interfaces.js';
 
 export type LogLevel = 'debug' | 'info' | 'warning' | 'error';
 export type LogFormat = 'json' | 'text';
@@ -16,7 +18,7 @@ interface LogEntry {
   };
 }
 
-class Logger {
+class Logger implements ILogger {
   private logFilePath?: string;
   private maxLogSize: number = 10 * 1024 * 1024; // 10MB default
   private maxLogFiles: number = 5; // Keep 5 rotated files
@@ -202,7 +204,7 @@ class Logger {
   // Log tool execution
   logToolExecution(toolName: string, params: any, duration: number, success: boolean) {
     const level: LogLevel = success ? 'info' : 'error';
-    this.log(level, `Tool execution: ${toolName}`, {
+    void this.log(level, `Tool execution: ${toolName}`, {
       tool: toolName,
       duration,
       success,
@@ -213,7 +215,7 @@ class Logger {
   // Log security events
   logSecurityEvent(event: string, details: string, severity: 'info' | 'warning' | 'error') {
     const level: LogLevel = severity === 'info' ? 'info' : severity === 'warning' ? 'warning' : 'error';
-    this.log(level, `Security: ${event}`, {
+    void this.log(level, `Security: ${event}`, {
       event,
       details,
       severity

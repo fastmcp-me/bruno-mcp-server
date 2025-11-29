@@ -1,5 +1,6 @@
-import { getConfigLoader } from './config.js';
 import type { BrunoRequest } from './bruno-cli.js';
+import { getConfigLoader } from './config.js';
+import type { IPerformanceManager } from './interfaces.js';
 
 /**
  * Performance utilities for Bruno MCP Server
@@ -102,7 +103,7 @@ class Cache<T> {
 /**
  * Performance manager singleton
  */
-class PerformanceManager {
+class PerformanceManager implements IPerformanceManager {
   private requestListCache: Cache<BrunoRequest[]>;
   private collectionDiscoveryCache: Cache<string[]>;
   private environmentListCache: Cache<Array<{ name: string; path: string; variables?: Record<string, string> }>>;

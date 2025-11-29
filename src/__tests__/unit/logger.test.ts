@@ -1,7 +1,8 @@
-import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getLogger, resetLogger, LogLevel, LogFormat } from '../../logger.js';
 import * as fs from 'fs/promises';
-import * as path from 'path';
+
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
+
+import { getLogger, resetLogger } from '../../logger.js';
 
 // Mock fs/promises
 vi.mock('fs/promises');

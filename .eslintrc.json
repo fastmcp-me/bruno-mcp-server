@@ -1,0 +1,65 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "plugins": ["@typescript-eslint", "import", "node", "promise"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
+    "prettier"
+  ],
+  "rules": {
+    "@typescript-eslint/no-floating-promises": "off",
+    "@typescript-eslint/await-thenable": "off",
+    "@typescript-eslint/no-misused-promises": "off",
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "no-var": "error",
+    "prefer-const": "error",
+    "eqeqeq": ["error", "always"],
+    "@typescript-eslint/explicit-function-return-type": "warn",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "complexity": ["warn", 20],
+    "max-lines-per-function": "off",
+    "max-depth": ["warn", 5],
+    "max-params": ["warn", 5],
+    "no-console": "off",
+    "import/order": ["warn", {
+      "groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
+      "newlines-between": "always",
+      "alphabetize": { "order": "asc" }
+    }],
+    "node/no-unsupported-features/es-syntax": "off",
+    "node/no-missing-import": "off",
+    "import/no-unresolved": "off"
+  },
+  "overrides": [
+    {
+      "files": ["src/**/*.ts"],
+      "excludedFiles": ["**/*.test.ts", "**/__tests__/**"],
+      "parserOptions": {
+        "project": "./tsconfig.json"
+      },
+      "rules": {
+        "@typescript-eslint/no-floating-promises": "error",
+        "@typescript-eslint/await-thenable": "error",
+        "@typescript-eslint/no-misused-promises": "error"
+      }
+    }
+  ],
+  "settings": {
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true
+      },
+      "node": {
+        "extensions": [".js", ".ts"]
+      }
+    }
+  },
+  "ignorePatterns": ["dist/", "node_modules/", "coverage/", "*.js"]
+}

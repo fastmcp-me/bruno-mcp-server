@@ -1,8 +1,10 @@
-import { describe, test, expect, beforeAll, afterAll } from 'vitest';
-import { BrunoCLI } from '../../bruno-cli.js';
-import * as path from 'path';
 import * as fs from 'fs/promises';
+import * as path from 'path';
 import { fileURLToPath } from 'url';
+
+import { describe, test, expect, beforeAll, afterAll } from 'vitest';
+
+import { BrunoCLI } from '../../bruno-cli.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

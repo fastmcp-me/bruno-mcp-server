@@ -1,12 +1,15 @@
-import { execa } from 'execa';
+import { randomUUID } from 'crypto';
 import * as fs from 'fs/promises';
+import { createRequire } from 'module';
+import { tmpdir } from 'os';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { randomUUID } from 'crypto';
-import { tmpdir } from 'os';
-import { createRequire } from 'module';
+
+import { execa } from 'execa';
+
 import { getConfigLoader } from './config.js';
 import { getPerformanceManager } from './performance.js';
+import type { IBrunoCLI } from './interfaces.js';
 
 export interface BrunoRunOptions {
   environment?: string;
@@ -68,7 +71,7 @@ export interface BrunoRequest {
   path?: string;
 }
 
-export class BrunoCLI {
+export class BrunoCLI implements IBrunoCLI {
   private brunoCommand: string = 'bru';
 
   constructor(brunoPath?: string) {
