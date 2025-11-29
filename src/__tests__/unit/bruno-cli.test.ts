@@ -3,8 +3,9 @@ import * as fs from 'fs/promises';
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { BrunoCLI } from '../../bruno-cli.js';
-import { getPerformanceManager } from '../../performance.js';
+import { PerformanceManager } from '../../performance.js';
 import { mockBrunoResponses } from '../mocks/bruno-cli.mock.js';
+import { createTestBrunoCLI, createTestPerformanceManager } from '../setup/test-di-helpers.js';
 
 // Mock fs module
 vi.mock('fs/promises');
@@ -20,13 +21,15 @@ const mockedExeca = execa as any;
 
 describe('BrunoCLI', () => {
   let brunoCLI: BrunoCLI;
+  let performanceManager: PerformanceManager;
   const testCollectionPath = '/test/collection';
 
   beforeEach(() => {
-    brunoCLI = new BrunoCLI();
+    brunoCLI = createTestBrunoCLI();
+    performanceManager = createTestPerformanceManager();
     vi.clearAllMocks();
     // Clear performance manager cache
-    getPerformanceManager().clearCache();
+    performanceManager.clearCache();
   });
 
   afterEach(() => {

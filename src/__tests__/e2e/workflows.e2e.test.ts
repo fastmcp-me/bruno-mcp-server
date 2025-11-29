@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { describe, test, expect, beforeAll } from 'vitest';
 
 import { BrunoCLI } from '../../bruno-cli.js';
+import { createTestBrunoCLI } from '../setup/test-di-helpers.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,7 +16,7 @@ describe('E2E Workflow Tests', () => {
   let brunoCLI: BrunoCLI;
 
   beforeAll(() => {
-    brunoCLI = new BrunoCLI();
+    brunoCLI = createTestBrunoCLI();
   });
 
   describe('Complete API Testing Workflow', () => {

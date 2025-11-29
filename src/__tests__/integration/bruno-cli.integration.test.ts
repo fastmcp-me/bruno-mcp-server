@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 
 import { BrunoCLI } from '../../bruno-cli.js';
+import { createTestBrunoCLI } from '../setup/test-di-helpers.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,7 +18,7 @@ describe('BrunoCLI Integration Tests', () => {
   let brunoCLI: BrunoCLI;
 
   beforeAll(async () => {
-    brunoCLI = new BrunoCLI();
+    brunoCLI = createTestBrunoCLI();
 
     // Ensure reports directory exists and is clean
     try {

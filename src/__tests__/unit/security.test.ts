@@ -14,35 +14,42 @@ import {
   validateToolParameters,
   logSecurityEvent
 } from '../../security.js';
+import { setContainer, Container, ServiceKeys } from '../../di/Container.js';
+import { createTestConfigLoader, createTestLogger } from '../setup/test-di-helpers.js';
+import type { ConfigLoader } from '../../config.js';
+import type { Logger } from '../../logger.js';
 
 // Mock fs module
 vi.mock('fs/promises');
 const mockedFs = fs as any;
 
-// Create a variable to hold the mocked config that can be changed per test
-let mockedAllowedPaths: string[] = [];
-
-// Mock the config loader
-vi.mock('../../config.js', () => ({
-  getConfigLoader: () => ({
-    getSecurity: () => ({
-      allowedPaths: mockedAllowedPaths,
-      maskSecrets: true,
-      secretPatterns: ['password', 'token', 'secret', 'key']
-    }),
-    maskSecrets: (text: string) => text.replace(/password=\w+/g, 'password=***')
-  })
-}));
-
-// Mock the logger
-const mockLogSecurityEvent = vi.fn();
-vi.mock('../../logger.js', () => ({
-  getLogger: () => ({
-    logSecurityEvent: mockLogSecurityEvent
-  })
-}));
+// Create instances for DI container
+let configLoader: ConfigLoader;
+let logger: Logger;
+let mockLogSecurityEvent: any;
 
 describe('Security', () => {
+  beforeEach(() => {
+    // Create fresh instances for each test
+    configLoader = createTestConfigLoader({
+      security: {
+        allowedPaths: [],
+        maskSecrets: true,
+        secretPatterns: ['password', 'token', 'secret', 'key']
+      }
+    });
+
+    // Create logger and spy on logSecurityEvent
+    logger = createTestLogger();
+    mockLogSecurityEvent = vi.spyOn(logger, 'logSecurityEvent');
+
+    // Set up DI container
+    const container = new Container();
+    container.register(ServiceKeys.CONFIG_LOADER, configLoader);
+    container.register(ServiceKeys.LOGGER, logger);
+    setContainer(container);
+  });
+
   describe('sanitizeInput()', () => {
     test('should remove dangerous characters', () => {
       const input = 'test; rm -rf files';
@@ -330,12 +337,9 @@ describe('Security', () => {
   describe('validatePath()', () => {
     beforeEach(() => {
       vi.clearAllMocks();
-      mockedAllowedPaths = []; // Reset to empty (allow all)
     });
 
     test('should allow any path when allowedPaths is empty', async () => {
-      mockedAllowedPaths = [];
-
       const result = await validatePath('/any/path');
 
       expect(result.valid).toBe(true);
@@ -343,7 +347,13 @@ describe('Security', () => {
     });
 
     test('should reject non-existent path when allowedPaths is configured', async () => {
-      mockedAllowedPaths = ['/home/user/collections'];
+      configLoader.updateConfig({
+        security: {
+          allowedPaths: ['/home/user/collections'],
+          maskSecrets: true,
+          secretPatterns: ['password', 'token', 'secret', 'key']
+        }
+      });
       mockedFs.access.mockRejectedValueOnce(new Error('ENOENT'));
 
       const result = await validatePath('/home/user/collections/test');
@@ -353,7 +363,13 @@ describe('Security', () => {
     });
 
     test('should accept path within allowed directory', async () => {
-      mockedAllowedPaths = ['/home/user/collections'];
+      configLoader.updateConfig({
+        security: {
+          allowedPaths: ['/home/user/collections'],
+          maskSecrets: true,
+          secretPatterns: ['password', 'token', 'secret', 'key']
+        }
+      });
       mockedFs.access.mockResolvedValueOnce(undefined);
 
       const result = await validatePath('/home/user/collections/api-tests');
@@ -363,7 +379,13 @@ describe('Security', () => {
     });
 
     test('should reject path outside allowed directories', async () => {
-      mockedAllowedPaths = ['/home/user/collections'];
+      configLoader.updateConfig({
+        security: {
+          allowedPaths: ['/home/user/collections'],
+          maskSecrets: true,
+          secretPatterns: ['password', 'token', 'secret', 'key']
+        }
+      });
       mockedFs.access.mockResolvedValueOnce(undefined);
 
       const result = await validatePath('/var/lib/other');
@@ -373,7 +395,13 @@ describe('Security', () => {
     });
 
     test('should handle validation errors gracefully', async () => {
-      mockedAllowedPaths = ['/home/user/collections'];
+      configLoader.updateConfig({
+        security: {
+          allowedPaths: ['/home/user/collections'],
+          maskSecrets: true,
+          secretPatterns: ['password', 'token', 'secret', 'key']
+        }
+      });
       mockedFs.access.mockRejectedValueOnce(new Error('Permission denied'));
 
       const result = await validatePath('/home/user/collections/test');
@@ -386,7 +414,6 @@ describe('Security', () => {
   describe('validateToolParameters()', () => {
     beforeEach(() => {
       vi.clearAllMocks();
-      mockedAllowedPaths = []; // Reset to empty
       mockedFs.access.mockResolvedValue(undefined); // Mock path exists by default
     });
 
@@ -409,7 +436,13 @@ describe('Security', () => {
     });
 
     test('should detect invalid collection path', async () => {
-      mockedAllowedPaths = ['/allowed/path'];
+      configLoader.updateConfig({
+        security: {
+          allowedPaths: ['/allowed/path'],
+          maskSecrets: true,
+          secretPatterns: ['password', 'token', 'secret', 'key']
+        }
+      });
       mockedFs.access.mockRejectedValueOnce(new Error('ENOENT'));
 
       const params = {

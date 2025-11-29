@@ -2,39 +2,21 @@ import * as fs from 'fs/promises';
 
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { getLogger, resetLogger } from '../../logger.js';
+import { Logger } from '../../logger.js';
+import { createTestLogger } from '../setup/test-di-helpers.js';
 
 // Mock fs/promises
 vi.mock('fs/promises');
 const mockedFs = fs as any;
 
-// Mock config
-let mockConfig: any = {
-  logging: {
-    level: 'info',
-    format: 'text',
-    logFile: undefined,
-    maxLogSize: 10 * 1024 * 1024,
-    maxLogFiles: 5
-  }
-};
-
-vi.mock('../../config.js', () => ({
-  getConfigLoader: () => ({
-    getConfig: () => mockConfig
-  })
-}));
-
 // Spy on console.error
 let consoleErrorSpy: any;
+let logger: Logger;
 
 describe('Logger', () => {
   beforeEach(() => {
-    // Reset logger singleton before each test
-    resetLogger();
-
-    // Reset mock config
-    mockConfig = {
+    // Create new logger instance for each test with default config
+    logger = createTestLogger({
       logging: {
         level: 'info',
         format: 'text',
@@ -42,7 +24,7 @@ describe('Logger', () => {
         maxLogSize: 10 * 1024 * 1024,
         maxLogFiles: 5
       }
-    };
+    });
 
     // Reset fs mocks
     vi.clearAllMocks();
@@ -60,50 +42,62 @@ describe('Logger', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  describe('getLogger()', () => {
-    test('should return singleton instance', () => {
-      const logger1 = getLogger();
-      const logger2 = getLogger();
-      expect(logger1).toBe(logger2);
-    });
-
-    test('should create new instance after reset', () => {
-      const logger1 = getLogger();
-      resetLogger();
-      const logger2 = getLogger();
-      expect(logger1).not.toBe(logger2);
-    });
-  });
-
   describe('initialization', () => {
     test('should initialize with default config', () => {
-      const logger = getLogger();
       expect(logger).toBeDefined();
     });
 
     test('should initialize with custom log file path', () => {
-      mockConfig.logging.logFile = '/tmp/test.log';
-      const logger = getLogger();
-      expect(logger).toBeDefined();
+      const customLogger = createTestLogger({
+        logging: {
+          level: 'info',
+          format: 'text',
+          logFile: '/tmp/test.log',
+          maxLogSize: 10 * 1024 * 1024,
+          maxLogFiles: 5
+        }
+      });
+      expect(customLogger).toBeDefined();
     });
 
     test('should initialize with custom max log size', () => {
-      mockConfig.logging.maxLogSize = 5 * 1024 * 1024;
-      const logger = getLogger();
-      expect(logger).toBeDefined();
+      const customLogger = createTestLogger({
+        logging: {
+          level: 'info',
+          format: 'text',
+          logFile: undefined,
+          maxLogSize: 5 * 1024 * 1024,
+          maxLogFiles: 5
+        }
+      });
+      expect(customLogger).toBeDefined();
     });
 
     test('should initialize with custom max log files', () => {
-      mockConfig.logging.maxLogFiles = 10;
-      const logger = getLogger();
-      expect(logger).toBeDefined();
+      const customLogger = createTestLogger({
+        logging: {
+          level: 'info',
+          format: 'text',
+          logFile: undefined,
+          maxLogSize: 10 * 1024 * 1024,
+          maxLogFiles: 10
+        }
+      });
+      expect(customLogger).toBeDefined();
     });
   });
 
   describe('log levels', () => {
     test('should log debug messages when level is debug', async () => {
-      mockConfig.logging.level = 'debug';
-      const logger = getLogger();
+      logger = createTestLogger({
+        logging: {
+          level: 'debug',
+          format: 'text',
+          logFile: undefined,
+          maxLogSize: 10 * 1024 * 1024,
+          maxLogFiles: 5
+        }
+      });
 
       await logger.debug('Debug message', { key: 'value' });
 
@@ -114,9 +108,6 @@ describe('Logger', () => {
     });
 
     test('should log info messages when level is info', async () => {
-      mockConfig.logging.level = 'info';
-      const logger = getLogger();
-
       await logger.info('Info message', { key: 'value' });
 
       expect(consoleErrorSpy).toHaveBeenCalled();
@@ -126,8 +117,15 @@ describe('Logger', () => {
     });
 
     test('should log warning messages when level is warning', async () => {
-      mockConfig.logging.level = 'warning';
-      const logger = getLogger();
+      logger = createTestLogger({
+        logging: {
+          level: 'warning',
+          format: 'text',
+          logFile: undefined,
+          maxLogSize: 10 * 1024 * 1024,
+          maxLogFiles: 5
+        }
+      });
 
       await logger.warning('Warning message', { key: 'value' });
 
@@ -138,8 +136,15 @@ describe('Logger', () => {
     });
 
     test('should log error messages', async () => {
-      mockConfig.logging.level = 'error';
-      const logger = getLogger();
+      logger = createTestLogger({
+        logging: {
+          level: 'error',
+          format: 'text',
+          logFile: undefined,
+          maxLogSize: 10 * 1024 * 1024,
+          maxLogFiles: 5
+        }
+      });
       const error = new Error('Test error');
 
       await logger.error('Error message', error, { key: 'value' });
@@ -152,17 +157,21 @@ describe('Logger', () => {
     });
 
     test('should not log debug when level is info', async () => {
-      mockConfig.logging.level = 'info';
-      const logger = getLogger();
-
       await logger.debug('Debug message');
 
       expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
 
     test('should not log info when level is warning', async () => {
-      mockConfig.logging.level = 'warning';
-      const logger = getLogger();
+      logger = createTestLogger({
+        logging: {
+          level: 'warning',
+          format: 'text',
+          logFile: undefined,
+          maxLogSize: 10 * 1024 * 1024,
+          maxLogFiles: 5
+        }
+      });
 
       await logger.info('Info message');
 
@@ -170,8 +179,15 @@ describe('Logger', () => {
     });
 
     test('should not log warning when level is error', async () => {
-      mockConfig.logging.level = 'error';
-      const logger = getLogger();
+      logger = createTestLogger({
+        logging: {
+          level: 'error',
+          format: 'text',
+          logFile: undefined,
+          maxLogSize: 10 * 1024 * 1024,
+          maxLogFiles: 5
+        }
+      });
 
       await logger.warning('Warning message');
 
@@ -181,8 +197,15 @@ describe('Logger', () => {
 
   describe('log formats', () => {
     test('should format logs as JSON when format is json', async () => {
-      mockConfig.logging.format = 'json';
-      const logger = getLogger();
+      logger = createTestLogger({
+        logging: {
+          level: 'info',
+          format: 'json',
+          logFile: undefined,
+          maxLogSize: 10 * 1024 * 1024,
+          maxLogFiles: 5
+        }
+      });
 
       await logger.info('Test message', { key: 'value' });
 
@@ -198,8 +221,6 @@ describe('Logger', () => {
     });
 
     test('should format logs as text when format is text', async () => {
-      mockConfig.logging.format = 'text';
-      const logger = getLogger();
 
       await logger.info('Test message', { key: 'value' });
 
@@ -211,8 +232,6 @@ describe('Logger', () => {
     });
 
     test('should format error with stack trace in text format', async () => {
-      mockConfig.logging.format = 'text';
-      const logger = getLogger();
       const error = new Error('Test error');
 
       await logger.error('Error occurred', error);
@@ -226,8 +245,15 @@ describe('Logger', () => {
     });
 
     test('should format error in JSON format', async () => {
-      mockConfig.logging.format = 'json';
-      const logger = getLogger();
+      logger = createTestLogger({
+        logging: {
+          level: 'info',
+          format: 'json',
+          logFile: undefined,
+          maxLogSize: 10 * 1024 * 1024,
+          maxLogFiles: 5
+        }
+      });
       const error = new Error('Test error');
 
       await logger.error('Error occurred', error);
@@ -245,8 +271,15 @@ describe('Logger', () => {
 
   describe('file logging', () => {
     test('should create log directory on first write', async () => {
-      mockConfig.logging.logFile = '/tmp/logs/test.log';
-      const logger = getLogger();
+      logger = createTestLogger({
+        logging: {
+          level: 'info',
+          format: 'text',
+          logFile: '/tmp/logs/test.log',
+          maxLogSize: 10 * 1024 * 1024,
+          maxLogFiles: 5
+        }
+      });
 
       await logger.info('Test message');
 
@@ -254,8 +287,15 @@ describe('Logger', () => {
     });
 
     test('should write to log file when configured', async () => {
-      mockConfig.logging.logFile = '/tmp/test.log';
-      const logger = getLogger();
+      logger = createTestLogger({
+        logging: {
+          level: 'info',
+          format: 'text',
+          logFile: '/tmp/test.log',
+          maxLogSize: 10 * 1024 * 1024,
+          maxLogFiles: 5
+        }
+      });
 
       await logger.info('Test message');
 
@@ -266,8 +306,6 @@ describe('Logger', () => {
     });
 
     test('should not write to file when logFile is not configured', async () => {
-      mockConfig.logging.logFile = undefined;
-      const logger = getLogger();
 
       await logger.info('Test message');
 
@@ -275,20 +313,34 @@ describe('Logger', () => {
     });
 
     test('should handle file write errors gracefully', async () => {
-      mockConfig.logging.logFile = '/tmp/test.log';
+      logger = createTestLogger({
+        logging: {
+          level: 'info',
+          format: 'text',
+          logFile: '/tmp/test.log',
+          maxLogSize: 10 * 1024 * 1024,
+          maxLogFiles: 5
+        }
+      });
       mockedFs.appendFile = vi.fn().mockRejectedValue(new Error('Write failed'));
 
-      const logger = getLogger();
 
       // Should not throw
       await expect(logger.info('Test message')).resolves.toBeUndefined();
     });
 
     test('should handle directory creation errors gracefully', async () => {
-      mockConfig.logging.logFile = '/tmp/test.log';
+      logger = createTestLogger({
+        logging: {
+          level: 'info',
+          format: 'text',
+          logFile: '/tmp/test.log',
+          maxLogSize: 10 * 1024 * 1024,
+          maxLogFiles: 5
+        }
+      });
       mockedFs.mkdir = vi.fn().mockRejectedValue(new Error('mkdir failed'));
 
-      const logger = getLogger();
 
       // Should not throw
       await expect(logger.info('Test message')).resolves.toBeUndefined();
@@ -297,13 +349,19 @@ describe('Logger', () => {
 
   describe('log rotation', () => {
     test('should rotate logs when size exceeds maxLogSize', async () => {
-      mockConfig.logging.logFile = '/tmp/test.log';
-      mockConfig.logging.maxLogSize = 100; // Small size to trigger rotation
+      logger = createTestLogger({
+        logging: {
+          level: 'info',
+          format: 'text',
+          logFile: '/tmp/test.log',
+          maxLogSize: 100, // Small size to trigger rotation
+          maxLogFiles: 5
+        }
+      });
 
       // Mock stat to return size near limit
       mockedFs.stat = vi.fn().mockResolvedValue({ size: 50 });
 
-      const logger = getLogger();
 
       // Write a message that will exceed the limit
       const longMessage = 'x'.repeat(100);
@@ -314,11 +372,16 @@ describe('Logger', () => {
     });
 
     test('should rotate existing log files', async () => {
-      mockConfig.logging.logFile = '/tmp/test.log';
-      mockConfig.logging.maxLogSize = 10;
-      mockConfig.logging.maxLogFiles = 3;
+      logger = createTestLogger({
+        logging: {
+          level: 'info',
+          format: 'text',
+          logFile: '/tmp/test.log',
+          maxLogSize: 10,
+          maxLogFiles: 3
+        }
+      });
 
-      const logger = getLogger();
 
       // Trigger rotation
       const longMessage = 'x'.repeat(100);
@@ -329,11 +392,16 @@ describe('Logger', () => {
     });
 
     test('should delete oldest log file when exceeding maxLogFiles', async () => {
-      mockConfig.logging.logFile = '/tmp/test.log';
-      mockConfig.logging.maxLogSize = 10;
-      mockConfig.logging.maxLogFiles = 2;
+      logger = createTestLogger({
+        logging: {
+          level: 'info',
+          format: 'text',
+          logFile: '/tmp/test.log',
+          maxLogSize: 10,
+          maxLogFiles: 2
+        }
+      });
 
-      const logger = getLogger();
 
       // Trigger rotation
       const longMessage = 'x'.repeat(100);
@@ -344,11 +412,17 @@ describe('Logger', () => {
     });
 
     test('should handle rotation errors gracefully', async () => {
-      mockConfig.logging.logFile = '/tmp/test.log';
-      mockConfig.logging.maxLogSize = 10;
+      logger = createTestLogger({
+        logging: {
+          level: 'info',
+          format: 'text',
+          logFile: '/tmp/test.log',
+          maxLogSize: 10,
+          maxLogFiles: 5
+        }
+      });
       mockedFs.rename = vi.fn().mockRejectedValue(new Error('Rename failed'));
 
-      const logger = getLogger();
 
       // Should not throw
       const longMessage = 'x'.repeat(100);
@@ -358,7 +432,6 @@ describe('Logger', () => {
 
   describe('logToolExecution()', () => {
     test('should log successful tool execution as info', async () => {
-      const logger = getLogger();
 
       await logger.logToolExecution('bruno_run_request', { collectionPath: '/test' }, 100, true);
 
@@ -371,7 +444,6 @@ describe('Logger', () => {
     });
 
     test('should log failed tool execution as error', async () => {
-      const logger = getLogger();
 
       await logger.logToolExecution('bruno_run_request', { collectionPath: '/test' }, 50, false);
 
@@ -382,7 +454,6 @@ describe('Logger', () => {
     });
 
     test('should sanitize sensitive parameters', async () => {
-      const logger = getLogger();
 
       await logger.logToolExecution('bruno_run_request', {
         password: 'secret123',
@@ -401,7 +472,6 @@ describe('Logger', () => {
 
   describe('logSecurityEvent()', () => {
     test('should log info security events', async () => {
-      const logger = getLogger();
 
       await logger.logSecurityEvent('Path validated', '/test/path', 'info');
 
@@ -413,7 +483,6 @@ describe('Logger', () => {
     });
 
     test('should log warning security events', async () => {
-      const logger = getLogger();
 
       await logger.logSecurityEvent('Suspicious input detected', 'Contains special chars', 'warning');
 
@@ -424,7 +493,6 @@ describe('Logger', () => {
     });
 
     test('should log error security events', async () => {
-      const logger = getLogger();
 
       await logger.logSecurityEvent('Access denied', 'Path outside allowed directories', 'error');
 
@@ -437,7 +505,6 @@ describe('Logger', () => {
 
   describe('parameter sanitization', () => {
     test('should mask password in parameters', async () => {
-      const logger = getLogger();
 
       await logger.logToolExecution('test_tool', { password: 'secret' }, 100, true);
 
@@ -448,7 +515,6 @@ describe('Logger', () => {
     });
 
     test('should mask token in parameters', async () => {
-      const logger = getLogger();
 
       await logger.logToolExecution('test_tool', { authToken: 'bearer123' }, 100, true);
 
@@ -458,7 +524,6 @@ describe('Logger', () => {
     });
 
     test('should mask apiKey in parameters', async () => {
-      const logger = getLogger();
 
       await logger.logToolExecution('test_tool', { apiKey: 'myapikey123' }, 100, true);
 
@@ -469,7 +534,6 @@ describe('Logger', () => {
     });
 
     test('should mask secret in parameters', async () => {
-      const logger = getLogger();
 
       await logger.logToolExecution('test_tool', { clientSecret: 'secret456' }, 100, true);
 
@@ -479,7 +543,6 @@ describe('Logger', () => {
     });
 
     test('should mask authorization in parameters', async () => {
-      const logger = getLogger();
 
       await logger.logToolExecution('test_tool', { authorization: 'Bearer xyz' }, 100, true);
 
@@ -489,7 +552,6 @@ describe('Logger', () => {
     });
 
     test('should not mask non-sensitive parameters', async () => {
-      const logger = getLogger();
 
       await logger.logToolExecution('test_tool', { collectionPath: '/test/path', requestName: 'Get Users' }, 100, true);
 
@@ -500,7 +562,6 @@ describe('Logger', () => {
     });
 
     test('should handle null parameters', async () => {
-      const logger = getLogger();
 
       // logToolExecution doesn't return a promise, so just call it
       await logger.logToolExecution('test_tool', null, 100, true);
@@ -509,7 +570,6 @@ describe('Logger', () => {
     });
 
     test('should handle undefined parameters', async () => {
-      const logger = getLogger();
 
       // logToolExecution doesn't return a promise, so just call it
       await logger.logToolExecution('test_tool', undefined, 100, true);
@@ -520,7 +580,6 @@ describe('Logger', () => {
 
   describe('edge cases', () => {
     test('should handle logging without context', async () => {
-      const logger = getLogger();
 
       await logger.info('Message without context');
 
@@ -530,7 +589,6 @@ describe('Logger', () => {
     });
 
     test('should handle logging with empty context', async () => {
-      const logger = getLogger();
 
       await logger.info('Message with empty context', {});
 
@@ -540,7 +598,6 @@ describe('Logger', () => {
     });
 
     test('should handle error without stack trace', async () => {
-      const logger = getLogger();
       const error = new Error('Test error');
       delete error.stack;
 
@@ -552,14 +609,12 @@ describe('Logger', () => {
     });
 
     test('should handle very long messages', async () => {
-      const logger = getLogger();
       const longMessage = 'x'.repeat(10000);
 
       await expect(logger.info(longMessage)).resolves.toBeUndefined();
     });
 
     test('should handle special characters in messages', async () => {
-      const logger = getLogger();
 
       await logger.info('Message with special chars: ñ, é, 中文, 🚀');
 
@@ -569,7 +624,6 @@ describe('Logger', () => {
     });
 
     test('should handle circular references in context', async () => {
-      const logger = getLogger();
       const circular: any = { a: 1 };
       circular.self = circular;
 
