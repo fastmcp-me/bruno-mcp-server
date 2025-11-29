@@ -261,24 +261,12 @@ export class ConfigLoader implements IConfigLoader {
   }
 }
 
-// Global configuration instance
-let globalConfigLoader: ConfigLoader | null = null;
-
-/**
- * Get or create global configuration loader
- */
-export function getConfigLoader(): ConfigLoader {
-  if (!globalConfigLoader) {
-    globalConfigLoader = new ConfigLoader();
-  }
-  return globalConfigLoader;
-}
-
 /**
  * Initialize configuration
+ * @deprecated Use Container to manage ConfigLoader instances instead
  */
 export async function initializeConfig(configPath?: string): Promise<BrunoMCPConfig> {
-  const loader = getConfigLoader();
+  const loader = new ConfigLoader();
 
   if (configPath) {
     return await loader.loadFromFile(configPath);

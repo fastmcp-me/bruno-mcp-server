@@ -1,18 +1,18 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-import { getConfigLoader } from './config.js';
-import { getLogger } from './logger.js';
+import type { ConfigLoader } from './config.js';
+import { getContainer, ServiceKeys } from './di/Container.js';
+import type { Logger } from './logger.js';
 
 /**
  * Security utilities for Bruno MCP Server
  */
 
 /**
- * Validate if a path is within allowed directories
+ * Validate if a path is within allowed directories (with DI)
  */
-export async function validatePath(targetPath: string): Promise<{ valid: boolean; error?: string }> {
-  const configLoader = getConfigLoader();
+export async function validatePathWithConfig(targetPath: string, configLoader: ConfigLoader): Promise<{ valid: boolean; error?: string }> {
   const security = configLoader.getSecurity();
 
   // If no allowed paths configured, allow all paths
@@ -116,10 +116,18 @@ export function sanitizeEnvVariables(envVars: Record<string, string>): {
 }
 
 /**
- * Mask secrets in error messages
+ * Validate if a path is within allowed directories (uses DI container)
  */
-export function maskSecretsInError(error: Error): Error {
-  const configLoader = getConfigLoader();
+export async function validatePath(targetPath: string): Promise<{ valid: boolean; error?: string }> {
+  const container = getContainer();
+  const configLoader = container.get<ConfigLoader>(ServiceKeys.CONFIG_LOADER);
+  return validatePathWithConfig(targetPath, configLoader);
+}
+
+/**
+ * Mask secrets in error messages (with DI)
+ */
+export function maskSecretsInErrorWithConfig(error: Error, configLoader: ConfigLoader): Error {
   const maskedMessage = configLoader.maskSecrets(error.message);
   const maskedStack = error.stack ? configLoader.maskSecrets(error.stack) : undefined;
 
@@ -128,6 +136,15 @@ export function maskSecretsInError(error: Error): Error {
   maskedError.stack = maskedStack;
 
   return maskedError;
+}
+
+/**
+ * Mask secrets in error messages (uses DI container)
+ */
+export function maskSecretsInError(error: Error): Error {
+  const container = getContainer();
+  const configLoader = container.get<ConfigLoader>(ServiceKeys.CONFIG_LOADER);
+  return maskSecretsInErrorWithConfig(error, configLoader);
 }
 
 /**
@@ -177,20 +194,23 @@ export function validateFolderPath(folderPath: string): { valid: boolean; error?
 }
 
 /**
- * Comprehensive security validation for tool parameters
+ * Comprehensive security validation for tool parameters (with DI)
  */
-export async function validateToolParameters(params: {
-  collectionPath?: string;
-  requestName?: string;
-  folderPath?: string;
-  envVariables?: Record<string, string>;
-}): Promise<{ valid: boolean; errors: string[]; warnings: string[] }> {
+export async function validateToolParametersWithConfig(
+  params: {
+    collectionPath?: string;
+    requestName?: string;
+    folderPath?: string;
+    envVariables?: Record<string, string>;
+  },
+  configLoader: ConfigLoader
+): Promise<{ valid: boolean; errors: string[]; warnings: string[] }> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
   // Validate collection path
   if (params.collectionPath) {
-    const pathValidation = await validatePath(params.collectionPath);
+    const pathValidation = await validatePathWithConfig(params.collectionPath, configLoader);
     if (!pathValidation.valid) {
       errors.push(pathValidation.error || 'Invalid collection path');
     }
@@ -226,15 +246,47 @@ export async function validateToolParameters(params: {
 }
 
 /**
- * Security audit logger
+ * Comprehensive security validation for tool parameters (uses DI container)
  */
-export function logSecurityEvent(event: {
-  type: 'path_validation' | 'input_sanitization' | 'env_var_validation' | 'access_denied';
-  details: string;
-  severity: 'info' | 'warning' | 'error';
-}): void {
-  const logger = getLogger();
+export async function validateToolParameters(
+  params: {
+    collectionPath?: string;
+    requestName?: string;
+    folderPath?: string;
+    envVariables?: Record<string, string>;
+  }
+): Promise<{ valid: boolean; errors: string[]; warnings: string[] }> {
+  const container = getContainer();
+  const configLoader = container.get<ConfigLoader>(ServiceKeys.CONFIG_LOADER);
+  return validateToolParametersWithConfig(params, configLoader);
+}
 
+/**
+ * Security audit logger (with DI)
+ */
+export function logSecurityEventWithLogger(
+  event: {
+    type: 'path_validation' | 'input_sanitization' | 'env_var_validation' | 'access_denied';
+    details: string;
+    severity: 'info' | 'warning' | 'error';
+  },
+  logger: Logger
+): void {
   // Use logger's logSecurityEvent method
   logger.logSecurityEvent(event.type, event.details, event.severity);
+}
+
+/**
+ * Security audit logger (uses DI container)
+ */
+export function logSecurityEvent(
+  event: {
+    type: 'path_validation' | 'input_sanitization' | 'env_var_validation' | 'access_denied';
+    details: string;
+    severity: 'info' | 'warning' | 'error';
+  }
+): void {
+  const container = getContainer();
+  const logger = container.get<Logger>(ServiceKeys.LOGGER);
+  logSecurityEventWithLogger(event, logger);
 }

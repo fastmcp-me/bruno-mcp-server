@@ -10,9 +10,10 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 
 import { BrunoCLI } from './bruno-cli.js';
-import { initializeConfig, getConfigLoader } from './config.js';
-import { getLogger } from './logger.js';
-import { getPerformanceManager } from './performance.js';
+import { ConfigLoader } from './config.js';
+import { getContainer, ServiceKeys } from './di/Container.js';
+import { Logger } from './logger.js';
+import { PerformanceManager } from './performance.js';
 import { ToolRegistry } from './tools/ToolRegistry.js';
 import { DiscoverCollectionsHandler } from './tools/handlers/DiscoverCollectionsHandler.js';
 import { GetRequestDetailsHandler } from './tools/handlers/GetRequestDetailsHandler.js';
@@ -239,6 +240,8 @@ class BrunoMCPServer {
   private server: Server;
   private brunoCLI: BrunoCLI;
   private toolRegistry: ToolRegistry;
+  private logger: Logger;
+  private configLoader: ConfigLoader;
 
   constructor() {
     this.server = new Server(
@@ -253,7 +256,12 @@ class BrunoMCPServer {
       }
     );
 
-    this.brunoCLI = new BrunoCLI();
+    // Get dependencies from container
+    const container = getContainer();
+    this.configLoader = container.get<ConfigLoader>(ServiceKeys.CONFIG_LOADER);
+    this.logger = container.get<Logger>(ServiceKeys.LOGGER);
+    this.brunoCLI = container.get<BrunoCLI>(ServiceKeys.BRUNO_CLI);
+
     this.toolRegistry = new ToolRegistry();
 
     this.registerToolHandlers();
@@ -264,25 +272,24 @@ class BrunoMCPServer {
   }
 
   private async checkBrunoCLI(): Promise<void> {
-    const logger = getLogger();
     const isAvailable = await this.brunoCLI.isAvailable();
     if (!isAvailable) {
-      void logger.warning('Bruno CLI is not available', { suggestion: 'Run npm install to install dependencies' });
+      void this.logger.warning('Bruno CLI is not available', { suggestion: 'Run npm install to install dependencies' });
       console.error('Warning: Bruno CLI is not available. Please run "npm install" to install dependencies.');
     } else {
-      void logger.info('Bruno CLI is available and ready');
+      void this.logger.info('Bruno CLI is available and ready');
     }
   }
 
   private registerToolHandlers(): void {
-    const configLoader = getConfigLoader();
-    const perfManager = getPerformanceManager();
+    const container = getContainer();
+    const perfManager = container.get<PerformanceManager>(ServiceKeys.PERFORMANCE_MANAGER);
 
     // Register all tool handlers
     this.toolRegistry.register(new RunRequestHandler(this.brunoCLI));
     this.toolRegistry.register(new RunCollectionHandler(this.brunoCLI));
     this.toolRegistry.register(new ListRequestsHandler(this.brunoCLI));
-    this.toolRegistry.register(new HealthCheckHandler(this.brunoCLI, configLoader, perfManager));
+    this.toolRegistry.register(new HealthCheckHandler(this.brunoCLI, this.configLoader, perfManager));
     this.toolRegistry.register(new DiscoverCollectionsHandler(this.brunoCLI));
     this.toolRegistry.register(new ListEnvironmentsHandler(this.brunoCLI));
     this.toolRegistry.register(new ValidateEnvironmentHandler(this.brunoCLI));
@@ -299,11 +306,10 @@ class BrunoMCPServer {
     // Handle tool execution using registry
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
-      const logger = getLogger();
       const startTime = Date.now();
 
       try {
-        void logger.info(`Executing tool: ${name}`, { tool: name });
+        void this.logger.info(`Executing tool: ${name}`, { tool: name });
 
         // Get handler from registry
         const handler = this.toolRegistry.get(name);
@@ -320,23 +326,23 @@ class BrunoMCPServer {
 
         // Log successful execution
         const duration = Date.now() - startTime;
-        logger.logToolExecution(name, args, duration, true);
+        this.logger.logToolExecution(name, args, duration, true);
 
         return {
           content: result.content
         };
       } catch (error) {
         const duration = Date.now() - startTime;
-        logger.logToolExecution(name, args, duration, false);
+        this.logger.logToolExecution(name, args, duration, false);
 
         if (error instanceof McpError) {
-          void logger.error(`Tool execution failed: ${name}`, error, { tool: name });
+          void this.logger.error(`Tool execution failed: ${name}`, error, { tool: name });
           throw error;
         }
 
         // Convert other errors to MCP errors
         const errorMessage = error instanceof Error ? error.message : String(error);
-        void logger.error(`Tool execution error: ${name}`, error instanceof Error ? error : new Error(errorMessage), { tool: name });
+        void this.logger.error(`Tool execution error: ${name}`, error instanceof Error ? error : new Error(errorMessage), { tool: name });
 
         throw new McpError(
           ErrorCode.InternalError,
@@ -347,14 +353,12 @@ class BrunoMCPServer {
   }
 
   async run(): Promise<void> {
-    const logger = getLogger();
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
 
-    const configLoader = getConfigLoader();
-    const config = configLoader.getConfig();
+    const config = this.configLoader.getConfig();
 
-    void logger.info('Bruno MCP Server started successfully', {
+    void this.logger.info('Bruno MCP Server started successfully', {
       version: '0.1.0',
       loggingLevel: config.logging?.level || 'info',
       retryEnabled: config.retry?.enabled || false,
@@ -366,10 +370,30 @@ class BrunoMCPServer {
   }
 }
 
-// Initialize configuration and start the server
+// Initialize DI container and start the server
 void (async () => {
   try {
-    await initializeConfig();
+    // Initialize DI container
+    const container = getContainer();
+
+    // Create and register ConfigLoader
+    const configLoader = new ConfigLoader();
+    await configLoader.loadConfig();
+    container.register(ServiceKeys.CONFIG_LOADER, configLoader);
+
+    // Create and register Logger (depends on ConfigLoader)
+    const logger = new Logger(configLoader);
+    container.register(ServiceKeys.LOGGER, logger);
+
+    // Create and register PerformanceManager (depends on ConfigLoader)
+    const performanceManager = new PerformanceManager(configLoader);
+    container.register(ServiceKeys.PERFORMANCE_MANAGER, performanceManager);
+
+    // Create and register BrunoCLI (depends on ConfigLoader and PerformanceManager)
+    const brunoCLI = new BrunoCLI(configLoader, performanceManager);
+    container.register(ServiceKeys.BRUNO_CLI, brunoCLI);
+
+    // Start the server
     const server = new BrunoMCPServer();
     await server.run();
   } catch (error) {

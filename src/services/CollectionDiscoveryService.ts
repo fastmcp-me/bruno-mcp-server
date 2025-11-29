@@ -7,7 +7,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 import type { BrunoRequest } from '../bruno-cli.js';
-import { getPerformanceManager } from '../performance.js';
+import type { PerformanceManager } from '../performance.js';
 
 // Re-export BrunoRequest for convenience
 export type { BrunoRequest };
@@ -17,14 +17,14 @@ export type { BrunoRequest };
  * Single Responsibility: Collection and request discovery operations
  */
 export class CollectionDiscoveryService {
+  constructor(private readonly performanceManager: PerformanceManager) {}
   /**
    * List all requests in a collection
    */
   async listRequests(collectionPath: string): Promise<BrunoRequest[]> {
     try {
       // Check cache first
-      const perfManager = getPerformanceManager();
-      const cached = perfManager.getCachedRequestList(collectionPath);
+      const cached = this.performanceManager.getCachedRequestList(collectionPath);
       if (cached) {
         console.error(`Using cached request list for: ${collectionPath}`);
         return cached;
@@ -46,7 +46,7 @@ export class CollectionDiscoveryService {
       const requests = await this.findBrunoRequests(collectionPath);
 
       // Cache the results
-      perfManager.cacheRequestList(collectionPath, requests);
+      this.performanceManager.cacheRequestList(collectionPath, requests);
 
       return requests;
     } catch (error) {
@@ -61,10 +61,8 @@ export class CollectionDiscoveryService {
    * Discover Bruno collections in a directory tree
    */
   async discoverCollections(searchPath: string, maxDepth: number = 5): Promise<string[]> {
-    const perfManager = getPerformanceManager();
-
     // Check cache first
-    const cached = perfManager.getCachedCollectionDiscovery(searchPath);
+    const cached = this.performanceManager.getCachedCollectionDiscovery(searchPath);
     if (cached) {
       return cached;
     }
@@ -107,7 +105,7 @@ export class CollectionDiscoveryService {
     await searchDirectory(searchPath, 0);
 
     // Cache the results
-    perfManager.cacheCollectionDiscovery(searchPath, collections);
+    this.performanceManager.cacheCollectionDiscovery(searchPath, collections);
 
     return collections;
   }

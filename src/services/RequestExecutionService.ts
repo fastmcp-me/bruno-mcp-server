@@ -10,7 +10,7 @@ import * as path from 'path';
 
 import { execa } from 'execa';
 
-import { getConfigLoader } from '../config.js';
+import type { ConfigLoader } from '../config.js';
 import type { BrunoRunOptions, BrunoRunResult } from '../bruno-cli.js';
 
 /**
@@ -18,7 +18,10 @@ import type { BrunoRunOptions, BrunoRunResult } from '../bruno-cli.js';
  * Single Responsibility: Execute and parse Bruno CLI operations
  */
 export class RequestExecutionService {
-  constructor(private readonly brunoCommand: string) {}
+  constructor(
+    private readonly brunoCommand: string,
+    private readonly configLoader: ConfigLoader
+  ) {}
 
   /**
    * Run a single request from a collection
@@ -56,8 +59,7 @@ export class RequestExecutionService {
 
     try {
       // Get timeout configuration
-      const configLoader = getConfigLoader();
-      const timeout = configLoader.getTimeout();
+      const timeout = this.configLoader.getTimeout();
 
       // Run Bruno CLI from within the collection directory
       const result = await execa(this.brunoCommand, args, {
@@ -124,8 +126,7 @@ export class RequestExecutionService {
 
     try {
       // Get timeout configuration
-      const configLoader = getConfigLoader();
-      const timeout = configLoader.getTimeout();
+      const timeout = this.configLoader.getTimeout();
 
       // Run Bruno CLI from within the collection directory
       const result = await execa(this.brunoCommand, args, {

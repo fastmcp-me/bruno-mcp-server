@@ -2,8 +2,9 @@ import { createRequire } from 'module';
 
 import { execa } from 'execa';
 
-import { getConfigLoader } from './config.js';
+import type { ConfigLoader } from './config.js';
 import type { IBrunoCLI } from './interfaces.js';
+import type { PerformanceManager } from './performance.js';
 import { CollectionDiscoveryService } from './services/CollectionDiscoveryService.js';
 import { EnvironmentService } from './services/EnvironmentService.js';
 import { RequestExecutionService } from './services/RequestExecutionService.js';
@@ -79,14 +80,18 @@ export class BrunoCLI implements IBrunoCLI {
   private collectionDiscoveryService: CollectionDiscoveryService;
   private environmentService: EnvironmentService;
   private validationService: ValidationService;
+  private configLoader: ConfigLoader;
+  private performanceManager: PerformanceManager;
 
-  constructor(brunoPath?: string) {
+  constructor(configLoader: ConfigLoader, performanceManager: PerformanceManager, brunoPath?: string) {
+    this.configLoader = configLoader;
+    this.performanceManager = performanceManager;
+
     if (brunoPath) {
       this.brunoCommand = brunoPath;
     } else {
       // Check configuration for custom Bruno CLI path
-      const configLoader = getConfigLoader();
-      const config = configLoader.getConfig();
+      const config = this.configLoader.getConfig();
 
       if (config.brunoCliPath) {
         this.brunoCommand = config.brunoCliPath;
@@ -96,10 +101,10 @@ export class BrunoCLI implements IBrunoCLI {
       }
     }
 
-    // Initialize services
-    this.requestExecutionService = new RequestExecutionService(this.brunoCommand);
-    this.collectionDiscoveryService = new CollectionDiscoveryService();
-    this.environmentService = new EnvironmentService();
+    // Initialize services with dependencies
+    this.requestExecutionService = new RequestExecutionService(this.brunoCommand, this.configLoader);
+    this.collectionDiscoveryService = new CollectionDiscoveryService(this.performanceManager);
+    this.environmentService = new EnvironmentService(this.performanceManager);
     this.validationService = new ValidationService();
   }
 

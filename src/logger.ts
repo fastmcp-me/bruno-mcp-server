@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-import { getConfigLoader } from './config.js';
+import type { ConfigLoader } from './config.js';
 import type { ILogger } from './interfaces.js';
 
 export type LogLevel = 'debug' | 'info' | 'warning' | 'error';
@@ -24,13 +24,15 @@ class Logger implements ILogger {
   private maxLogFiles: number = 5; // Keep 5 rotated files
   private currentLogSize: number = 0;
   private directoryInitialized: boolean = false;
+  private configLoader: ConfigLoader;
 
-  constructor() {
+  constructor(configLoader: ConfigLoader) {
+    this.configLoader = configLoader;
     this.initializeLogger();
   }
 
   private initializeLogger() {
-    const config = getConfigLoader().getConfig();
+    const config = this.configLoader.getConfig();
 
     if (config.logging?.logFile) {
       this.logFilePath = config.logging.logFile;
@@ -66,7 +68,7 @@ class Logger implements ILogger {
   }
 
   private shouldLog(level: LogLevel): boolean {
-    const config = getConfigLoader().getConfig();
+    const config = this.configLoader.getConfig();
     const configLevel = config.logging?.level || 'info';
 
     const levels: LogLevel[] = ['debug', 'info', 'warning', 'error'];
@@ -77,7 +79,7 @@ class Logger implements ILogger {
   }
 
   private formatLogEntry(entry: LogEntry): string {
-    const config = getConfigLoader().getConfig();
+    const config = this.configLoader.getConfig();
     const format = config.logging?.format || 'text';
 
     if (format === 'json') {
@@ -239,16 +241,4 @@ class Logger implements ILogger {
   }
 }
 
-// Singleton instance
-let loggerInstance: Logger | null = null;
-
-export function getLogger(): Logger {
-  if (!loggerInstance) {
-    loggerInstance = new Logger();
-  }
-  return loggerInstance;
-}
-
-export function resetLogger() {
-  loggerInstance = null;
-}
+export { Logger };

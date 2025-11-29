@@ -1,5 +1,5 @@
 import type { BrunoRequest } from './bruno-cli.js';
-import { getConfigLoader } from './config.js';
+import type { ConfigLoader } from './config.js';
 import type { IPerformanceManager } from './interfaces.js';
 
 /**
@@ -101,7 +101,7 @@ class Cache<T> {
 }
 
 /**
- * Performance manager singleton
+ * Performance manager
  */
 class PerformanceManager implements IPerformanceManager {
   private requestListCache: Cache<BrunoRequest[]>;
@@ -110,10 +110,11 @@ class PerformanceManager implements IPerformanceManager {
   private fileContentCache: Cache<string>;
   private metrics: ExecutionMetric[] = [];
   private maxMetrics = 1000; // Keep last 1000 metrics
+  private configLoader: ConfigLoader;
 
-  constructor() {
-    const configLoader = getConfigLoader();
-    const perfConfig = configLoader.getPerformance();
+  constructor(configLoader: ConfigLoader) {
+    this.configLoader = configLoader;
+    const perfConfig = this.configLoader.getPerformance();
     this.requestListCache = new Cache(perfConfig.cacheTTL);
     this.collectionDiscoveryCache = new Cache(perfConfig.cacheTTL * 2); // Cache discovery longer
     this.environmentListCache = new Cache(perfConfig.cacheTTL);
@@ -124,8 +125,7 @@ class PerformanceManager implements IPerformanceManager {
    * Cache collection request list
    */
   cacheRequestList(collectionPath: string, requests: BrunoRequest[]): void {
-    const configLoader = getConfigLoader();
-    if (!configLoader.getPerformance().cacheEnabled) {
+    if (!this.configLoader.getPerformance().cacheEnabled) {
       return;
     }
     this.requestListCache.set(collectionPath, requests);
@@ -135,8 +135,7 @@ class PerformanceManager implements IPerformanceManager {
    * Get cached request list
    */
   getCachedRequestList(collectionPath: string): BrunoRequest[] | null {
-    const configLoader = getConfigLoader();
-    if (!configLoader.getPerformance().cacheEnabled) {
+    if (!this.configLoader.getPerformance().cacheEnabled) {
       return null;
     }
     return this.requestListCache.get(collectionPath);
@@ -146,8 +145,7 @@ class PerformanceManager implements IPerformanceManager {
    * Cache collection discovery results
    */
   cacheCollectionDiscovery(searchPath: string, collections: string[]): void {
-    const configLoader = getConfigLoader();
-    if (!configLoader.getPerformance().cacheEnabled) {
+    if (!this.configLoader.getPerformance().cacheEnabled) {
       return;
     }
     this.collectionDiscoveryCache.set(searchPath, collections);
@@ -157,8 +155,7 @@ class PerformanceManager implements IPerformanceManager {
    * Get cached collection discovery results
    */
   getCachedCollectionDiscovery(searchPath: string): string[] | null {
-    const configLoader = getConfigLoader();
-    if (!configLoader.getPerformance().cacheEnabled) {
+    if (!this.configLoader.getPerformance().cacheEnabled) {
       return null;
     }
     return this.collectionDiscoveryCache.get(searchPath);
@@ -168,8 +165,7 @@ class PerformanceManager implements IPerformanceManager {
    * Cache environment list
    */
   cacheEnvironmentList(collectionPath: string, environments: Array<{ name: string; path: string; variables?: Record<string, string> }>): void {
-    const configLoader = getConfigLoader();
-    if (!configLoader.getPerformance().cacheEnabled) {
+    if (!this.configLoader.getPerformance().cacheEnabled) {
       return;
     }
     this.environmentListCache.set(collectionPath, environments);
@@ -179,8 +175,7 @@ class PerformanceManager implements IPerformanceManager {
    * Get cached environment list
    */
   getCachedEnvironmentList(collectionPath: string): Array<{ name: string; path: string; variables?: Record<string, string> }> | null {
-    const configLoader = getConfigLoader();
-    if (!configLoader.getPerformance().cacheEnabled) {
+    if (!this.configLoader.getPerformance().cacheEnabled) {
       return null;
     }
     return this.environmentListCache.get(collectionPath);
@@ -190,8 +185,7 @@ class PerformanceManager implements IPerformanceManager {
    * Cache file content
    */
   cacheFileContent(filePath: string, content: string): void {
-    const configLoader = getConfigLoader();
-    if (!configLoader.getPerformance().cacheEnabled) {
+    if (!this.configLoader.getPerformance().cacheEnabled) {
       return;
     }
     this.fileContentCache.set(filePath, content);
@@ -201,8 +195,7 @@ class PerformanceManager implements IPerformanceManager {
    * Get cached file content
    */
   getCachedFileContent(filePath: string): string | null {
-    const configLoader = getConfigLoader();
-    if (!configLoader.getPerformance().cacheEnabled) {
+    if (!this.configLoader.getPerformance().cacheEnabled) {
       return null;
     }
     return this.fileContentCache.get(filePath);
@@ -333,85 +326,7 @@ class PerformanceManager implements IPerformanceManager {
   }
 }
 
-// Global performance manager instance
-let globalPerformanceManager: PerformanceManager | null = null;
-
-/**
- * Get or create global performance manager
- */
-export function getPerformanceManager(): PerformanceManager {
-  if (!globalPerformanceManager) {
-    globalPerformanceManager = new PerformanceManager();
-  }
-  return globalPerformanceManager;
-}
-
-/**
- * Decorator to track execution metrics
- */
-export function trackExecution(tool: string) {
-  return function (
-    target: any,
-    propertyKey: string,
-    descriptor: PropertyDescriptor
-  ) {
-    const originalMethod = descriptor.value;
-
-    descriptor.value = async function (...args: any[]) {
-      const startTime = Date.now();
-      const perfManager = getPerformanceManager();
-      let success = true;
-
-      try {
-        const result = await originalMethod.apply(this, args);
-        return result;
-      } catch (error) {
-        success = false;
-        throw error;
-      } finally {
-        const duration = Date.now() - startTime;
-        perfManager.recordMetric({
-          tool,
-          duration,
-          success,
-          timestamp: Date.now()
-        });
-      }
-    };
-
-    return descriptor;
-  };
-}
-
-/**
- * Measure execution time
- */
-export async function measureExecution<T>(
-  tool: string,
-  fn: () => Promise<T>,
-  metadata?: { collectionPath?: string; requestName?: string }
-): Promise<T> {
-  const startTime = Date.now();
-  const perfManager = getPerformanceManager();
-  let success = true;
-
-  try {
-    const result = await fn();
-    return result;
-  } catch (error) {
-    success = false;
-    throw error;
-  } finally {
-    const duration = Date.now() - startTime;
-    perfManager.recordMetric({
-      tool,
-      duration,
-      success,
-      timestamp: Date.now(),
-      ...metadata
-    });
-  }
-}
+export { PerformanceManager };
 
 /**
  * Format metrics for display

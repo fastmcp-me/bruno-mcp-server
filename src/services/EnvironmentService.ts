@@ -6,7 +6,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-import { getPerformanceManager } from '../performance.js';
+import type { PerformanceManager } from '../performance.js';
 
 export interface Environment {
   name: string;
@@ -27,14 +27,13 @@ export interface EnvironmentValidationResult {
  * Single Responsibility: Environment operations (list, validate, parse)
  */
 export class EnvironmentService {
+  constructor(private readonly performanceManager: PerformanceManager) {}
   /**
    * List all environments in a collection
    */
   async listEnvironments(collectionPath: string): Promise<Environment[]> {
-    const perfManager = getPerformanceManager();
-
     // Check cache first
-    const cached = perfManager.getCachedEnvironmentList(collectionPath);
+    const cached = this.performanceManager.getCachedEnvironmentList(collectionPath);
     if (cached) {
       return cached;
     }
@@ -74,7 +73,7 @@ export class EnvironmentService {
     }
 
     // Cache the results
-    perfManager.cacheEnvironmentList(collectionPath, environments);
+    this.performanceManager.cacheEnvironmentList(collectionPath, environments);
 
     return environments;
   }
