@@ -8,8 +8,8 @@ import { fileURLToPath } from 'url';
 import { execa } from 'execa';
 
 import { getConfigLoader } from './config.js';
-import { getPerformanceManager } from './performance.js';
 import type { IBrunoCLI } from './interfaces.js';
+import { getPerformanceManager } from './performance.js';
 
 export interface BrunoRunOptions {
   environment?: string;
