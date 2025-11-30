@@ -2,6 +2,9 @@ import * as fs from 'fs/promises';
 
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 
+import type { ConfigLoader } from '../../config.js';
+import { setContainer, Container, ServiceKeys } from '../../di/Container.js';
+import type { Logger } from '../../logger.js';
 import {
   sanitizeInput,
   validatePath,
@@ -14,10 +17,7 @@ import {
   validateToolParameters,
   logSecurityEvent
 } from '../../security.js';
-import { setContainer, Container, ServiceKeys } from '../../di/Container.js';
 import { createTestConfigLoader, createTestLogger } from '../setup/test-di-helpers.js';
-import type { ConfigLoader } from '../../config.js';
-import type { Logger } from '../../logger.js';
 
 // Mock fs module
 vi.mock('fs/promises');

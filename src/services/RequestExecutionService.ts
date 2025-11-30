@@ -10,8 +10,8 @@ import * as path from 'path';
 
 import { execa } from 'execa';
 
-import type { ConfigLoader } from '../config.js';
 import type { BrunoRunOptions, BrunoRunResult } from '../bruno-cli.js';
+import type { ConfigLoader } from '../config.js';
 
 /**
  * Service responsible for executing Bruno requests and collections

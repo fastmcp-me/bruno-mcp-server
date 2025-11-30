@@ -49,6 +49,14 @@
         "@typescript-eslint/await-thenable": "error",
         "@typescript-eslint/no-misused-promises": "error"
       }
+    },
+    {
+      "files": ["**/*.test.ts", "**/__tests__/**/*.ts"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "complexity": "off"
+      }
     }
   ],
   "settings": {
