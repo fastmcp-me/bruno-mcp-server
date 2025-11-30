@@ -16,6 +16,7 @@
     "!dist/**/*.spec.*",
     "README.md",
     "LICENSE",
+    ".mcp.json",
     "bruno-mcp.config.example.json"
   ],
   "scripts": {

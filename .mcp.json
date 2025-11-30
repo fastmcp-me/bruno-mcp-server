@@ -1,0 +1,136 @@
+{
+  "name": "bruno",
+  "description": "MCP server for Bruno CLI integration - Execute API tests through Model Context Protocol",
+  "version": "1.0.3",
+  "command": {
+    "type": "npx",
+    "package": "bruno-mcp-server"
+  },
+  "args": [],
+  "env": {},
+  "capabilities": {
+    "tools": [
+      "bruno_run_request",
+      "bruno_run_collection",
+      "bruno_list_requests",
+      "bruno_discover_collections",
+      "bruno_list_environments",
+      "bruno_validate_environment",
+      "bruno_get_request_details",
+      "bruno_validate_collection",
+      "bruno_health_check"
+    ]
+  },
+  "config": {
+    "schema": {
+      "timeout": {
+        "type": "object",
+        "description": "Timeout configuration for requests and collections",
+        "properties": {
+          "request": {
+            "type": "number",
+            "default": 30000,
+            "description": "Request timeout in milliseconds"
+          },
+          "collection": {
+            "type": "number",
+            "default": 120000,
+            "description": "Collection timeout in milliseconds"
+          }
+        }
+      },
+      "retry": {
+        "type": "object",
+        "description": "Retry configuration for failed requests",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "maxAttempts": {
+            "type": "number",
+            "default": 3
+          },
+          "backoff": {
+            "type": "string",
+            "enum": ["exponential", "linear"],
+            "default": "exponential"
+          }
+        }
+      },
+      "security": {
+        "type": "object",
+        "description": "Security settings for path validation and secret masking",
+        "properties": {
+          "allowedPaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of allowed collection paths"
+          },
+          "maskSecrets": {
+            "type": "boolean",
+            "default": true
+          },
+          "secretPatterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": ["password", "api[_-]?key", "token"]
+          }
+        }
+      },
+      "logging": {
+        "type": "object",
+        "description": "Logging configuration",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": ["debug", "info", "warn", "error"],
+            "default": "info"
+          },
+          "format": {
+            "type": "string",
+            "enum": ["json", "text"],
+            "default": "json"
+          }
+        }
+      },
+      "performance": {
+        "type": "object",
+        "description": "Performance optimization settings",
+        "properties": {
+          "cacheEnabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "cacheTTL": {
+            "type": "number",
+            "default": 300000,
+            "description": "Cache time-to-live in milliseconds"
+          }
+        }
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jcr82/bruno-mcp-server.git"
+  },
+  "author": "Juan Ruiz",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "bruno",
+    "api-testing",
+    "model-context-protocol",
+    "bruno-cli",
+    "api",
+    "testing",
+    "automation",
+    "claude",
+    "ai-tools"
+  ]
+}

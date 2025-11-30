@@ -28,22 +28,35 @@ A Model Context Protocol (MCP) server that integrates Bruno CLI for API testing 
 
 ### Installation
 
+#### Option 1: Using Claude MCP Add (Recommended)
+
+```bash
+claude mcp add bruno-mcp-server
+```
+
+This will automatically install and configure the MCP server in your Claude Desktop or CLI configuration.
+
+#### Option 2: Manual Installation
+
 ```bash
 npm install -g bruno-mcp-server
 ```
 
 ### Configuration
 
-Add to your Claude Desktop configuration:
+#### Manual Configuration (Skip if you used `claude mcp add`)
+
+If you installed manually via npm, add to your Claude Desktop configuration:
 
 **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows**: `%APPDATA%Claudeclaude_desktop_config.json`
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "bruno": {
-      "command": "bruno-mcp-server"
+      "command": "npx",
+      "args": ["bruno-mcp-server"]
     }
   }
 }
