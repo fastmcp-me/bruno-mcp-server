@@ -123,7 +123,7 @@ export class BrunoCLI implements IBrunoCLI {
 
       // Check if the binary exists
       if (fsSync.existsSync(brunoBinPath)) {
-        return 'node';  // We'll call it via node
+        return brunoBinPath;  // Return the full path to bru.js
       }
     } catch {
       // Package not found, try global installation

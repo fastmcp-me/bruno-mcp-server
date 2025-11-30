@@ -61,8 +61,22 @@ export class RequestExecutionService {
       // Get timeout configuration
       const timeout = this.configLoader.getTimeout();
 
+      // Determine command and args based on whether brunoCommand is a .js file
+      let command: string;
+      let execArgs: string[];
+
+      if (this.brunoCommand.endsWith('.js')) {
+        // If it's a .js file path, explicitly invoke with node
+        command = 'node';
+        execArgs = [this.brunoCommand, ...args];
+      } else {
+        // If it's a binary name like 'bru', use it directly
+        command = this.brunoCommand;
+        execArgs = args;
+      }
+
       // Run Bruno CLI from within the collection directory
-      const result = await execa(this.brunoCommand, args, {
+      const result = await execa(command, execArgs, {
         cwd: collectionPath,
         env: { ...process.env },
         reject: false,
@@ -128,8 +142,22 @@ export class RequestExecutionService {
       // Get timeout configuration
       const timeout = this.configLoader.getTimeout();
 
+      // Determine command and args based on whether brunoCommand is a .js file
+      let command: string;
+      let execArgs: string[];
+
+      if (this.brunoCommand.endsWith('.js')) {
+        // If it's a .js file path, explicitly invoke with node
+        command = 'node';
+        execArgs = [this.brunoCommand, ...args];
+      } else {
+        // If it's a binary name like 'bru', use it directly
+        command = this.brunoCommand;
+        execArgs = args;
+      }
+
       // Run Bruno CLI from within the collection directory
-      const result = await execa(this.brunoCommand, args, {
+      const result = await execa(command, execArgs, {
         cwd: collectionPath,
         env: { ...process.env },
         reject: false,
