@@ -31,10 +31,10 @@ A Model Context Protocol (MCP) server that integrates Bruno CLI for API testing 
 #### Option 1: Using Claude MCP Add (Recommended)
 
 ```bash
-claude mcp add bruno-mcp-server
+claude mcp add --transport stdio bruno -- npx -y bruno-mcp-server
 ```
 
-This will automatically install and configure the MCP server in your Claude Desktop or CLI configuration.
+This will automatically configure the MCP server in your Claude CLI configuration.
 
 #### Option 2: Manual Installation
 
