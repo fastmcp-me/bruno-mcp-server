@@ -59,12 +59,12 @@ export class ValidateEnvironmentHandler implements IToolHandler {
         output.push(`❌ Status: Not Found`);
         output.push('');
         output.push('Errors:');
-        result.errors.forEach(err => output.push(`  • ${err}`));
+        result.errors.forEach((err: string) => output.push(`  • ${err}`));
       } else if (!result.valid) {
         output.push(`❌ Status: Invalid`);
         output.push('');
         output.push('Errors:');
-        result.errors.forEach(err => output.push(`  • ${err}`));
+        result.errors.forEach((err: string) => output.push(`  • ${err}`));
       } else {
         output.push(`✅ Status: Valid`);
         output.push('');
@@ -89,7 +89,7 @@ export class ValidateEnvironmentHandler implements IToolHandler {
 
       if (result.warnings.length > 0) {
         output.push('Warnings:');
-        result.warnings.forEach(warn => output.push(`  ⚠️  ${warn}`));
+        result.warnings.forEach((warn: string) => output.push(`  ⚠️  ${warn}`));
       }
 
       return {

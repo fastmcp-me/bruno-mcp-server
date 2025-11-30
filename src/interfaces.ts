@@ -139,7 +139,11 @@ export interface IBrunoCLI {
   /**
    * List all environments in a collection
    */
-  listEnvironments(collectionPath: string): Promise<unknown[]>;
+  listEnvironments(collectionPath: string): Promise<Array<{
+    name: string;
+    path: string;
+    variables?: Record<string, string>;
+  }>>;
 
   /**
    * Validate an environment file
@@ -147,7 +151,13 @@ export interface IBrunoCLI {
   validateEnvironment(
     collectionPath: string,
     environmentName: string
-  ): Promise<unknown>;
+  ): Promise<{
+    valid: boolean;
+    exists: boolean;
+    errors: string[];
+    warnings: string[];
+    variables?: Record<string, string>;
+  }>;
 
   /**
    * Get details of a specific request without executing it
@@ -155,10 +165,36 @@ export interface IBrunoCLI {
   getRequestDetails(
     collectionPath: string,
     requestName: string
-  ): Promise<unknown>;
+  ): Promise<{
+    name: string;
+    method: string;
+    url: string;
+    headers: Record<string, string>;
+    body?: {
+      type: string;
+      content: string;
+    };
+    auth: string;
+    tests?: string[];
+    metadata: {
+      type: string;
+      seq?: number;
+    };
+  }>;
 
   /**
    * Validate a collection's structure and configuration
    */
-  validateCollection(collectionPath: string): Promise<unknown>;
+  validateCollection(collectionPath: string): Promise<{
+    valid: boolean;
+    errors: string[];
+    warnings: string[];
+    summary: {
+      hasBrunoJson: boolean;
+      totalRequests: number;
+      validRequests: number;
+      invalidRequests: number;
+      environments: number;
+    };
+  }>;
 }

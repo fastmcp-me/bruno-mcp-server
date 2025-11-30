@@ -22,7 +22,11 @@ export function createTestConfigLoader(overrides?: Partial<BrunoMCPConfig>): Con
 /**
  * Create all core service instances for testing
  */
-export function createTestServices(configOverrides?: Partial<BrunoMCPConfig>) {
+export function createTestServices(configOverrides?: Partial<BrunoMCPConfig>): {
+  configLoader: ConfigLoader;
+  logger: Logger;
+  performanceManager: PerformanceManager;
+} {
   const configLoader = createTestConfigLoader(configOverrides);
   const logger = new Logger(configLoader);
   const performanceManager = new PerformanceManager(configLoader);

@@ -69,14 +69,14 @@ export class ValidateCollectionHandler implements IToolHandler {
       // Errors
       if (result.errors.length > 0) {
         output.push('Errors:');
-        result.errors.forEach(err => output.push(`  ✗ ${err}`));
+        result.errors.forEach((err: string) => output.push(`  ✗ ${err}`));
         output.push('');
       }
 
       // Warnings
       if (result.warnings.length > 0) {
         output.push('Warnings:');
-        result.warnings.forEach(warn => output.push(`  ⚠️  ${warn}`));
+        result.warnings.forEach((warn: string) => output.push(`  ⚠️  ${warn}`));
         output.push('');
       }
 

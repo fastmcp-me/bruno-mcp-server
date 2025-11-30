@@ -110,7 +110,7 @@ export class RunCollectionHandler implements IToolHandler {
       let requestsToValidate = requests;
       if (params.folderPath) {
         requestsToValidate = requests.filter(req =>
-          req.folder && req.folder.includes(params.folderPath)
+          req.folder && params.folderPath && req.folder.includes(params.folderPath)
         );
       }
 
