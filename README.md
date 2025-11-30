@@ -26,47 +26,53 @@ A Model Context Protocol (MCP) server that integrates Bruno CLI for API testing 
 - Node.js 20 or higher
 - Bruno collections (`.bru` files)
 
-### Installation
+### 📝 What is Bruno MCP Server?
+
+The **Bruno MCP Server** integrates the **Bruno CLI** (an open-source API client) with the Model Context Protocol (MCP) to enable **direct API testing, collection management, and reporting** via Claude.
+
+Bruno stores its collections as human-readable `.bru` files in your filesystem, allowing for seamless integration with version control (Git).
+
+### 🚀 Key Capabilities
+
+- **API Execution** - Run **individual requests** or **full test collections**
+- **Validation** - Perform **schema and environment validation** (including a **dry run mode** without making HTTP calls)
+- **Discovery** - Recursively **locate Bruno collections** across specified directories
+- **Environment Management** - **List and validate** specific environments within a collection (e.g., `dev`, `staging`, `production`)
+- **Reporting** - Generate comprehensive reports in **JSON, JUnit XML, or HTML** formats
+
+### 💡 Sample Prompts
+
+| Goal | Sample Prompt |
+|:-----|:--------------|
+| **Discovery** | "Find all Bruno collections in my projects directory at `/Users/user-name/projects`" |
+| **Request Execution** | "Run the 'Get User' request from `/path/to/collection` using the 'dev' environment" |
+| **Validation (Dry Run)** | "Validate the 'Create User' request from `/path/to/collection` without making the HTTP call" |
+| **Full Run & Reporting** | "Run all tests in my API collection at `/path/to/collection` and generate HTML and JSON reports in `./reports`" |
+| **Environment Check** | "List all environments in `/path/to/collection` and validate the 'production' environment" |
+
+### 📥 Installation (Claude CLI)
 
 #### Option 1: Using Claude MCP Add (Recommended)
 
-**Basic Installation:**
-```bash
-claude mcp add --transport stdio bruno -- npx -y bruno-mcp-server
-```
+The simplest method is using the `claude mcp add` command, which automatically installs the server and configures the MCP transport.
 
-**Install Specific Version:**
-```bash
-claude mcp add --transport stdio bruno -- npx -y bruno-mcp-server@latest
-```
+| Scope | Command |
+|:------|:--------|
+| **Global** (personal use) | `claude mcp add --transport stdio bruno -- npx -y bruno-mcp-server` |
+| **Project-Scoped** (team projects) | `claude mcp add --transport stdio bruno --scope project -- npx -y bruno-mcp-server` |
 
-**Project-Scoped Installation (for team projects):**
-```bash
-claude mcp add --transport stdio bruno --scope project -- npx -y bruno-mcp-server@latest
-```
-
-**Important Notes:**
-- The `--transport stdio` flag is **required** for local npm packages
-- The `--` separator is **required** to separate Claude CLI flags from the server command
-- The `-y` flag automatically accepts npx prompts
-- Use `--scope project` to store the configuration in your project instead of globally
-
-This will automatically configure the MCP server in your Claude CLI configuration file.
+> **Note:** The `--transport stdio` flag and the `--` separator are **required**. The `-y` flag automatically accepts npx prompts.
 
 #### Option 2: Manual Installation
 
+1. Install the package globally:
 ```bash
 npm install -g bruno-mcp-server
 ```
 
-### Configuration
-
-#### Manual Configuration (Skip if you used `claude mcp add`)
-
-If you installed manually via npm, add to your Claude Desktop configuration:
-
-**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+2. Add to your Claude CLI configuration file:
+   - **Global config:** `~/.claude.json`
+   - **Project config:** `.claude.json` (in your project root)
 
 ```json
 {
@@ -77,6 +83,27 @@ If you installed manually via npm, add to your Claude Desktop configuration:
     }
   }
 }
+```
+
+3. Restart your Claude CLI session
+
+### ✅ Verification
+
+To confirm the server is installed correctly, check the appropriate configuration file:
+
+```bash
+# For global installation
+cat ~/.claude.json
+
+# For project-scoped installation
+cat .claude.json
+```
+
+You should see the `"bruno"` server listed under `mcpServers`.
+
+**Test the installation** by starting a new Claude CLI session and trying:
+```
+"Check if the bruno MCP server is available and list its tools"
 ```
 
 ## Available Tools
