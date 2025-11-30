@@ -30,11 +30,28 @@ A Model Context Protocol (MCP) server that integrates Bruno CLI for API testing 
 
 #### Option 1: Using Claude MCP Add (Recommended)
 
+**Basic Installation:**
 ```bash
 claude mcp add --transport stdio bruno -- npx -y bruno-mcp-server
 ```
 
-This will automatically configure the MCP server in your Claude CLI configuration.
+**Install Specific Version:**
+```bash
+claude mcp add --transport stdio bruno -- npx -y bruno-mcp-server@latest
+```
+
+**Project-Scoped Installation (for team projects):**
+```bash
+claude mcp add --transport stdio bruno --scope project -- npx -y bruno-mcp-server@latest
+```
+
+**Important Notes:**
+- The `--transport stdio` flag is **required** for local npm packages
+- The `--` separator is **required** to separate Claude CLI flags from the server command
+- The `-y` flag automatically accepts npx prompts
+- Use `--scope project` to store the configuration in your project instead of globally
+
+This will automatically configure the MCP server in your Claude CLI configuration file.
 
 #### Option 2: Manual Installation
 
@@ -296,6 +313,22 @@ bruno-mcp-server/
 - **Environment Validation**: Validates variables for safe characters
 
 ## Troubleshooting
+
+### Installation Issues
+
+**Error: "missing required argument 'commandOrUrl'"**
+- Make sure you include `--transport stdio` and `--` separator
+- Correct: `claude mcp add --transport stdio bruno -- npx -y bruno-mcp-server`
+- Wrong: `claude mcp add bruno-mcp-server`
+
+**MCP Server Not Showing Up in Claude**
+1. Verify installation: `cat ~/.claude.json` (or project's `.claude.json` if using `--scope project`)
+2. Restart Claude Desktop/CLI after installation
+3. Check the server is configured correctly in the JSON file
+
+**npx Prompts During Installation**
+- Always use the `-y` flag: `npx -y bruno-mcp-server`
+- This auto-accepts installation prompts
 
 ### Bruno CLI Not Found
 ```bash
